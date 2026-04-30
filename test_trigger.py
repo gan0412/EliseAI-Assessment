@@ -53,6 +53,7 @@ def main():
                 data = response.json()
                 print("SUCCESS! Received Enriched Data:")
                 print(f"  Priority: {data['enriched_data']['Priority']}")
+                print(f"  Apollo Firmographics: {data['enriched_data'].get('Apollo_Data', 'None')}")
                 print(f"  Insights Length: {len(data['enriched_data']['Sales_Insights'])} chars")
                 print(f"  Email Draft: {data['enriched_data']['Draft_Email'][:100]}...\n")
             else:

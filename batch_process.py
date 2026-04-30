@@ -27,6 +27,7 @@ def main():
                     
                     # Add the new AI data to our row
                     row["Priority"] = enriched_data.get("Priority", "Unknown")
+                    row["Apollo_Data"] = enriched_data.get("Apollo_Data", "None")
                     row["Sales_Insights"] = enriched_data.get("Sales_Insights", "Error")
                     row["Draft_Email"] = enriched_data.get("Draft_Email", "Error")
                     
@@ -37,9 +38,17 @@ def main():
                 print(f"  -> Error: {e}")
 
     if enriched_rows:
-        # Sort by Priority (HIGH -> MEDIUM -> LOW)
-        priority_map = {"HIGH": 1, "MEDIUM": 2, "LOW": 3}
-        enriched_rows.sort(key=lambda x: priority_map.get(x.get("Priority", "LOW"), 4))
+        # Sort by Priority (5 -> 1)
+        def get_priority_val(x):
+            try:
+                # Extract just the number if Claude accidentally added text
+                p_str = str(x.get("Priority", "1")).strip()
+                if not p_str: return 1
+                return int(p_str[0])
+            except ValueError:
+                return 1
+                
+        enriched_rows.sort(key=get_priority_val, reverse=True)
 
         print(f"\nWriting results to {OUTPUT_CSV}...")
         fieldnames = list(enriched_rows[0].keys())

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EliseAI SDR Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin: 0;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .dashboard-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        tr.lead-row {
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        tr.lead-row:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Priority Badges */
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .priority-5 { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .priority-4 { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .priority-3 { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .priority-2 { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .priority-1 { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .company-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .apollo-data {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Expandable Row */
+        .details-row {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .details-row.active {
+            display: table-row;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .details-content {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .insights-box, .email-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .box-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .email-text {
+            width: 100%;
+            min-height: 250px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .email-text:focus {
+            border-color: var(--accent);
+        }
+
+        .copy-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .copy-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .assignee-select {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.4rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .assignee-select:focus {
+            border-color: var(--accent);
+        }
+
+        .view-btn {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .view-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .remove-icon {
+            background: transparent;
+            color: #ef4444;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
+        .remove-icon:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .refresh-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+        }
+
+        .refresh-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .refresh-toast:hover {
+            background: #2563eb;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body data-lead-count="{{ leads|length }}">
+
+    <div id="refresh-toast" class="refresh-toast" onclick="window.location.reload()">
+        ↑ New inbound leads available. Click to refresh!
+    </div>
+
+    <div class="header">
+        <div>
+            <h1>Lead Prioritization Dashboard</h1>
+            <div class="subtitle">AI-Enriched Inbound Leads</div>
+        </div>
+        <div>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">Powered by EliseAI & Apollo</span>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        {% if leads %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30px;"></th>
+                    <th>Lead Name</th>
+                    <th>Company</th>
+                    <th>Assignee</th>
+                    <th>Employees</th>
+                    <th>Revenue</th>
+                    <th>LinkedIn</th>
+                    <th>Location</th>
+                    <th>Priority Score</th>
+                    <th>Draft Outreach</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <!-- Main Row -->
+                <tr class="lead-row" onclick="toggleDetails('details-{{ loop.index }}')">
+                    <td onclick="event.stopPropagation();" style="text-align: center;">
+                        <button class="remove-icon" onclick="removeLead('{{ lead.get('Email Address', '') }}')" title="Remove Lead">×</button>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">{{ lead.get('Name', 'Unknown') }}</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">{{ lead.get('Email Address', '') }}</div>
+                    </td>
+                    <td>
+                        <div class="company-name">{{ lead.get('Company', 'Unknown') }}</div>
+                    </td>
+                    <td onclick="event.stopPropagation();">
+                        <select class="assignee-select" onchange="updateAssignee('{{ lead.get('Email Address', '') }}', this.value, '{{ loop.index }}')">
+                            <option value="">Unassigned</option>
+                            <option value="Alice (Senior SDR)" {% if lead.get('Assignee') == 'Alice (Senior SDR)' %}selected{% endif %}>Alice (Senior)</option>
+                            <option value="Bob (SDR)" {% if lead.get('Assignee') == 'Bob (SDR)' %}selected{% endif %}>Bob (SDR)</option>
+                            <option value="Charlie (SDR)" {% if lead.get('Assignee') == 'Charlie (SDR)' %}selected{% endif %}>Charlie (SDR)</option>
+                        </select>
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ lead.get('apollo_employees', 'N/A') }}</td>
+                    <td style="font-size: 0.85rem;">
+                        {% if lead.get('apollo_revenue', 'N/A') != 'N/A' and lead.get('apollo_revenue', 'N/A') != 'Unknown' %}
+                            ${{ lead.get('apollo_revenue') }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem;">
+                        {% if lead.get('apollo_linkedin', '#') != '#' and lead.get('apollo_linkedin') != 'Unknown' %}
+                        <a href="{{ lead.get('apollo_linkedin') }}" target="_blank" style="color: var(--accent); text-decoration: none;" onclick="event.stopPropagation();">View Profile</a>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ lead.get('City', '') }}, {{ lead.get('State', '') }}</td>
+                    <td>
+                        <span class="priority-badge priority-{{ lead.get('Priority', '1')[0] }}">
+                            {% if lead.get('Priority', '1')[0] == '5' %}
+                                5 - High Priority
+                            {% elif lead.get('Priority', '1')[0] == '4' %}
+                                4 - Medium-High
+                            {% elif lead.get('Priority', '1')[0] == '3' %}
+                                3 - Medium
+                            {% elif lead.get('Priority', '1')[0] == '2' %}
+                                2 - Low-Medium
+                            {% else %}
+                                1 - Low Priority
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="view-btn" onclick="toggleDetails('details-{{ loop.index }}'); event.stopPropagation();">View Draft</button>
+                    </td>
+                </tr>
+                <!-- Expandable Details Row -->
+                <tr id="details-{{ loop.index }}" class="details-row">
+                    <td colspan="10">
+                        <div class="details-content">
+                            <!-- Sales Insights -->
+                            <div class="insights-box">
+                                <div class="box-title">AI Sales Insights</div>
+                                <div style="font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; color: #cbd5e1;">{{ lead.get('Sales_Insights', 'No insights available.') }}</div>
+                            </div>
+                            
+                            <!-- Draft Email -->
+                            <div class="email-box">
+                                <div class="box-title">Drafted Outreach Email (Editable)</div>
+                                <textarea class="email-text" id="email-{{ loop.index }}" onchange="updateEmail('{{ lead.get('Email Address', '') }}', this.value)">{{ lead.get('Draft_Email', '') }}</textarea>
+                                <button class="copy-btn" title="Copy Email to Clipboard" onclick="copyEmail('email-{{ loop.index }}', this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <h2>No leads found.</h2>
+            <p>Waiting for incoming webhook events...</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Polling logic to check for new leads
+        let initialCount = parseInt(document.body.getAttribute('data-lead-count')) || 0;
+        
+        setInterval(() => {
+            fetch('/lead_count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.count > initialCount) {
+                        document.getElementById('refresh-toast').classList.add('show');
+                    }
+                })
+                .catch(err => console.error("Error checking lead count:", err));
+        }, 3000); // Poll every 3 seconds
+
+        function updateAssignee(email, assignee, index) {
+            fetch('/assign', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email, assignee: assignee })
+            }).then(response => response.json())
+              .then(data => {
+                if (data.status === "success" && data.updated_draft) {
+                    document.getElementById('email-' + index).value = data.updated_draft;
+                } else {
+                    console.error("Failed to update assignee");
+                }
+            }).catch(err => console.error("Error updating assignee:", err));
+        }
+
+        function updateEmail(email, draft_text) {
+            fetch('/update_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email, draft_email: draft_text })
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Failed to update email");
+                }
+            });
+        }
+
+        function removeLead(email) {
+            if (!confirm("Are you sure you want to remove this lead?")) return;
+            
+            fetch('/remove_lead', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    console.error("Failed to remove lead");
+                }
+            });
+        }
+
+        function toggleDetails(id) {
+            const row = document.getElementById(id);
+            if (row.classList.contains('active')) {
+                row.classList.remove('active');
+            } else {
+                row.classList.add('active');
+            }
+        }
+
+        function copyEmail(elementId, buttonElem) {
+            const emailText = document.getElementById(elementId).value;
+            navigator.clipboard.writeText(emailText).then(() => {
+                const originalHTML = buttonElem.innerHTML;
+                buttonElem.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                buttonElem.style.background = "#10b981"; // green
+                setTimeout(() => {
+                    buttonElem.innerHTML = originalHTML;
+                    buttonElem.style.background = "";
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
